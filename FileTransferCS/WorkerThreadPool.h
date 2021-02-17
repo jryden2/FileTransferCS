@@ -21,26 +21,26 @@ public:
 
     virtual void Start() override
     {
-        _thread = std::thread([]()
-	{
-    	    while (true)
-       	    {
-                // Construct a lock object and wait for a client to put a request on the queue
-                std::unique_lock<std::mutex> lk(_mutex);
-                _conditionVariable.wait(lk, [=] {return !_taskQueue.empty(); });
+       _thread = std::thread([&]()
+       {
+          while (true)
+          {
+             // Construct a lock object and wait for a client to put a request on the queue
+             std::unique_lock<std::mutex> lk(_mutex);
+             _conditionVariable.wait(lk, [=] {return !_taskQueue.empty(); });
 
-		// If the stop signal is set, break out and terminate
-	        if (_stopFlag) break;
+             // If the stop signal is set, break out and terminate
+             if (_stopFlag) break;
 
-	        // Pop a copy of the next task off the queue
-		auto Task = _taskQueue.front();
-	        _taskQueue.pop();
+             // Pop a copy of the next task off the queue
+             auto Task = _taskQueue.front();
+             _taskQueue.pop();
 
-	       // Release the lock before executing the task Task() is the stored function
-	       lk.unlock();
-	       Task();
-	    }
-	});
+             // Release the lock before executing the task Task() is the stored function
+             lk.unlock();
+             Task();
+          }
+       });
     }
 
     virtual void Stop() override
