@@ -12,7 +12,7 @@ public:
     IWorkerThreadPool() {};
     virtual ~IWorkerThreadPool() {};
 
-    virtual void Start() = 0;
+    virtual void SetThreadCount(int count) = 0;
     virtual void Stop() = 0;
    
     virtual void StartTimer(int timeoutMs, std::function<void()> callback) = 0;

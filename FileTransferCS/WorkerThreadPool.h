@@ -7,6 +7,7 @@
 #include <queue>
 #include <condition_variable>
 #include <chrono>
+#include <map>
 
 using Clock = std::chrono::high_resolution_clock;
 using TimePoint = std::chrono::time_point<Clock>;
@@ -15,11 +16,9 @@ class WorkerThreadPool : public IWorkerThreadPool
 {
 public:
    WorkerThreadPool()
-      : _stopFlag(false),
-      _threadCount(2)
+      : _stopFlag(false)
    {
       printf("WorkerThread construct");
-      Start();
    }
 
    virtual ~WorkerThreadPool()
@@ -32,12 +31,16 @@ public:
     * ===  FUNCTION  ======================================================================
     *         Name:  Start
     *  Description: Todo, de-uglify this comment template
-    *  Todo: Expand to more than a single thread
     * =====================================================================================
     */
-   virtual void Start() override
+   virtual void SetThreadCount(int count) override
    {
-      _thread = std::thread([=]()
+      _threadCount = count;
+   }
+
+   void CreateThreadPoolThread(uint8_t index)
+   {
+      _threads[index] = std::make_shared<std::thread>([=]()
       {
          while (true)
          {
@@ -105,8 +108,12 @@ public:
          // Post a 0 task to wake the thread.  
          Post(0);
 
-         // Wait for the thread
-         _thread.join();
+         // Wait for the threads
+         for (auto& pair : _threads)
+         {
+            auto pThread = pair.second;
+            pThread->join();
+         }
       }
    }
 
@@ -153,6 +160,14 @@ public:
          // Lock the mutex while we push a new task onto the queue
          std::lock_guard<std::mutex> lk(_mutex);
          _taskQueue.push(Task);
+
+         if (_taskQueue.size() > _threads.size() &&
+             _threads.size() < _threadCount)
+         {
+            // Start up a new thread. 
+            // Todo: Shrink the threads running in the pool as well.  This requires some thought still.
+            CreateThreadPoolThread(_threads.size());
+         }
       }
       _conditionVariable.notify_one();
    }
@@ -167,7 +182,7 @@ private:
    int _threadCount;
    std::queue<std::function<void()>> _taskQueue;
    std::map<TimePoint, std::function<void()>> _timerMap;
-   std::thread _thread;
+   std::map<uint8_t, std::shared_ptr<std::thread>> _threads;
    bool _stopFlag;
    std::mutex _mutex;
    std::condition_variable _conditionVariable;
