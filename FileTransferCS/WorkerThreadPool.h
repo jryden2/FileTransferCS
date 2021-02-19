@@ -26,13 +26,6 @@ public:
       Stop();
    }
 
-
-   /*
-    * ===  FUNCTION  ======================================================================
-    *         Name:  Start
-    *  Description: Todo, de-uglify this comment template
-    * =====================================================================================
-    */
    virtual void SetThreadCount(int count) override
    {
       _threadCount = count;
@@ -117,6 +110,9 @@ public:
       }
    }
 
+   // Todo: This StartTimer implementation worked in Ubuntu but the commented
+   // code block fails in windows.  Requires investigation, but the function
+   // is not currently required by this project
    void StartTimer(int timeoutMs, std::function<void()> Callback) override
    {
       // Register a timer
@@ -166,7 +162,7 @@ public:
          {
             // Start up a new thread. 
             // Todo: Shrink the threads running in the pool as well.  This requires some thought still.
-            CreateThreadPoolThread(_threads.size());
+            CreateThreadPoolThread((uint8_t)_threads.size());
          }
       }
       _conditionVariable.notify_one();
@@ -179,7 +175,7 @@ public:
    }
 
 private:
-   int _threadCount;
+   uint8_t _threadCount;
    std::queue<std::function<void()>> _taskQueue;
    std::map<TimePoint, std::function<void()>> _timerMap;
    std::map<uint8_t, std::shared_ptr<std::thread>> _threads;

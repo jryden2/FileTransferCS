@@ -142,9 +142,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FileTransferCS.cpp" />
+    <ClCompile Include="TransactionUnit.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ILogger.h" />
     <ClInclude Include="IWorkerThreadPool.h" />
+    <ClInclude Include="SimpleLogger.h" />
+    <ClInclude Include="TransactionManager.h" />
+    <ClInclude Include="TransactionUnit.h" />
     <ClInclude Include="WorkerThreadPool.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -17,194 +17,10 @@
 #include <WS2tcpip.h>
 
 #include "WorkerThreadPool.h"
+#include "SimpleLogger.h"
 
-class ILogger
-{
-public:
-   virtual void Log(int level, const std::string& s) = 0;
-};
-
-class SimpleLogger : public ILogger
-{
-public:
-   void Log(int level, const std::string& s) override
-   {
-      std::stringstream ss;
-      ss << "[Sev:" << level << "] " << s << std::endl;
-      std::cout << ss.str();
-
-#ifdef _WIN32
-      OutputDebugString(ss.str().c_str());
-#endif
-   }
-};
-
-
-// Transmission headers
-//
-//        0                   1                   2                   3
-//        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//       |          32 bit cookie (minor security and versioning)        |
-//       |                 32 bit transaction id                         |
-//       |       Msg type                  |        Length               |
-//       |       16 bit Sequence #         |        Reserved             |
-//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//       |                                                               |
-//       |                         Message data                          |
-//       |                                                               |
-//       .                                                               .
-//       .                                                               .
-//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
-static const int MagicCookie = 0xA343F33B;               // A magic cookie to recognize our activity
-// Message types
-enum MsgType
-{
-   MsgType_StartTransaction = 0x0001,  // Message data contains filename (Sequence #0 expected)
-   MsgType_EndTransaction = 0x0002,    // Message data empty
-   MsgType_RetransmitReq = 0x0003,     // Message data empty (Sequence number is requested sequence)
-   MsgType_Data = 0x0004,              // Message data contains a message blob of specified size
-};
-
-class TransmissionUnit
-{
-public:
-   TransmissionUnit(const std::vector<char> buffer)
-      : _mySize(16)
-   {
-      auto buf = buffer.data();
-
-      memcpy(&cookie, buf, sizeof(cookie));
-      buf += sizeof(cookie);
-
-      memcpy(&transactionid, buf, sizeof(transactionid));
-      buf += sizeof(transactionid);
-
-      memcpy(&messagetype, buf, sizeof(messagetype));
-      buf += sizeof(messagetype);
-
-      memcpy(&messagelength, buf, sizeof(messagelength));
-      buf += sizeof(messagelength);
-
-      memcpy(&sequencenum, buf, sizeof(sequencenum));
-      buf += sizeof(sequencenum);
-
-      memcpy(&reserved, buf, sizeof(reserved));
-      buf += sizeof(reserved);
-
-      messagedata.resize(messagelength);
-      messagedata.assign(buf, buf + messagelength);
-
-      _isValid = cookie == MagicCookie;
-   }
-
-   TransmissionUnit()
-      : _mySize(16),
-        _isValid(true),
-        cookie(MagicCookie),
-        reserved(0)
-   {}
-
-   bool IsValid() { return _isValid; }
-
-   void GetBlob(std::vector<char>& buffer)
-   {
-      buffer.resize(_mySize + messagedata.size());
-
-      char* buf = buffer.data();
-
-      memcpy(buf, &cookie, sizeof(cookie));
-      buf += sizeof(cookie);
-
-      memcpy(buf, &transactionid, sizeof(transactionid));
-      buf += sizeof(transactionid);
-
-      memcpy(buf, &messagetype, sizeof(messagetype));
-      buf += sizeof(messagetype);
-
-      memcpy(buf, &messagelength, sizeof(messagelength));
-      buf += sizeof(messagelength);
-
-      memcpy(buf, &sequencenum, sizeof(sequencenum));
-      buf += sizeof(sequencenum);
-
-      memcpy(buf, &sequencenum, sizeof(sequencenum));
-      buf += sizeof(sequencenum);
-
-      memcpy(buf, messagedata.data(), messagedata.size());
-   }
-
-   uint32_t cookie;
-   uint32_t transactionid;
-   uint16_t messagetype;
-   uint16_t messagelength;
-   uint16_t sequencenum;
-   uint16_t reserved;
-
-   std::vector<char> messagedata;
-
-private:
-   const uint32_t _mySize;
-   bool _isValid;
-};
-
-class TransactionManager
-{
-public:
-   TransactionManager() = default;
-   ~TransactionManager() = default;
-
-   void Add(std::shared_ptr<TransmissionUnit> tu)
-   {
-      // Find the associated transaction and add the unit to the list of pending messages
-      auto iter = _packets.find(tu->transactionid);
-      if (iter != _packets.end())
-      {
-         iter->second.insert(std::make_pair(tu->sequencenum, tu));
-      }
-      else
-      {
-         // Create a new transaction for this unit
-         _packets[tu->transactionid].insert(std::make_pair(tu->sequencenum, tu));
-      }
-   }
-
-   std::shared_ptr<TransmissionUnit> Collect(uint32_t transactionID)
-   {
-      auto iter = _packets.find(transactionID);
-      if (iter != _packets.end())
-      {
-         auto& sequenceMap = iter->second;
-         if (sequenceMap.size())
-         {
-            auto p = sequenceMap.begin()->second;
-            
-            // Check sequence
-            if (p->sequencenum == _nextSequence[transactionID])
-            {
-               _nextSequence[transactionID]++;
-               _packets.erase(iter);
-               return p;
-            }
-         }
-      }
-
-      return std::shared_ptr<TransmissionUnit>();
-   }
-
-private:
-   std::map<uint32_t, std::map<uint16_t, std::shared_ptr<TransmissionUnit>>> _packets;
-   std::map<uint32_t, uint16_t> _nextSequence;
-};
-
-
-
-
-
-
-
-
+#include "TransactionUnit.h"
+#include "TransactionManager.h"
 
 class INetworkListener
 {
@@ -246,8 +62,8 @@ public:
       _fileStream.read(s.data(), s.size());
 
       auto count = _fileStream.gcount();
-      s.resize(count);
-      return count;
+      s.resize((size_t)count);
+      return (uint32_t)count;
    };
 
    void SetFile(const std::string& filename) 
@@ -407,7 +223,7 @@ public:
       _server->Receive([&](auto buf)
       {
          // Handle the new packet
-         auto tu = std::make_shared<TransmissionUnit>(buf);
+         auto tu = std::make_shared<TransactionUnit>(buf);
 
          std::stringstream ss;
          ss << "Receiver got " << buf.size() << " bytes";
@@ -495,11 +311,11 @@ public:
          std::string filename = "test.txt";
 
          // Create a transmission unit for the start block
-         auto tu = std::make_shared<TransmissionUnit>();
+         auto tu = std::make_shared<TransactionUnit>();
          tu->messagedata.assign(filename.begin(), filename.end());
-         tu->messagelength = filename.size();
+         tu->messagelength = (uint16_t)filename.size();
          tu->messagetype = MsgType_StartTransaction;
-         tu->transactionid = transactionID;
+         tu->transactionid = (uint32_t)transactionID;
          tu->sequencenum = 0;
          //_manager.Add(tu);
 
@@ -514,15 +330,15 @@ public:
          while (1)
          {
             // Create a transmission unit for this block
-            auto tu = std::make_shared<TransmissionUnit>();
+            auto tu = std::make_shared<TransactionUnit>();
 
             // Read the first block from the file
             tu->messagedata.resize(_blockSize);
             int read = reader->Read(tu->messagedata);
 
             tu->messagetype = MsgType_Data;
-            tu->messagelength = tu->messagedata.size();
-            tu->transactionid = transactionID;
+            tu->messagelength = (uint16_t)tu->messagedata.size();
+            tu->transactionid = (uint32_t)transactionID;
             tu->sequencenum = sequenceNumber++;
             //_manager.Add(tu);
 
@@ -535,11 +351,11 @@ public:
          }
 
          // Create a transmission unit for the end block
-         tu = std::make_shared<TransmissionUnit>();
+         tu = std::make_shared<TransactionUnit>();
          tu->messagedata.assign(filename.begin(), filename.end());
-         tu->messagelength = filename.size();
+         tu->messagelength = (uint16_t)filename.size();
          tu->messagetype = MsgType_EndTransaction;
-         tu->transactionid = transactionID;
+         tu->transactionid = (uint32_t)transactionID;
          tu->sequencenum = 0;
          //_manager.Add(tu);
 
