@@ -10,6 +10,7 @@
 #include <functional>
 #include <vector>
 #include <map>
+#include <set>
 #include <random>
 
 #include <winsock2.h>
@@ -39,8 +40,6 @@ public:
 };
 
 
-
-
 // Transmission headers
 //
 //        0                   1                   2                   3
@@ -68,8 +67,9 @@ enum MsgType
    MsgType_Data = 0x0004,              // Message data contains a message blob of specified size
 };
 
-struct TransmissionUnit
+class TransmissionUnit
 {
+public:
    TransmissionUnit(const std::vector<char> buffer)
       : _mySize(16)
    {
@@ -158,20 +158,44 @@ public:
    void Add(std::shared_ptr<TransmissionUnit> tu)
    {
       // Find the associated transaction and add the unit to the list of pending messages
-      auto iter = unconfirmedPackets.find(tu->transactionid);
-      if (iter != unconfirmedPackets.end())
+      auto iter = _packets.find(tu->transactionid);
+      if (iter != _packets.end())
       {
          iter->second.insert(std::make_pair(tu->sequencenum, tu));
       }
       else
       {
          // Create a new transaction for this unit
-         unconfirmedPackets[tu->transactionid].insert(std::make_pair(tu->sequencenum, tu));
+         _packets[tu->transactionid].insert(std::make_pair(tu->sequencenum, tu));
       }
    }
 
+   std::shared_ptr<TransmissionUnit> Collect(uint32_t transactionID)
+   {
+      auto iter = _packets.find(transactionID);
+      if (iter != _packets.end())
+      {
+         auto& sequenceMap = iter->second;
+         if (sequenceMap.size())
+         {
+            auto p = sequenceMap.begin()->second;
+            
+            // Check sequence
+            if (p->sequencenum == _nextSequence[transactionID])
+            {
+               _nextSequence[transactionID]++;
+               _packets.erase(iter);
+               return p;
+            }
+         }
+      }
+
+      return std::shared_ptr<TransmissionUnit>();
+   }
+
 private:
-   std::map<uint32_t, std::map<uint16_t, std::shared_ptr<TransmissionUnit>>> unconfirmedPackets;
+   std::map<uint32_t, std::map<uint16_t, std::shared_ptr<TransmissionUnit>>> _packets;
+   std::map<uint32_t, uint16_t> _nextSequence;
 };
 
 
@@ -379,7 +403,6 @@ public:
 
       // Create a UDP Server to collect data
       _server = std::make_shared<UDPReceiver>(_logger, _threadPool);
-               
 
       _server->Receive([&](auto buf)
       {
@@ -409,6 +432,8 @@ public:
 
             case MsgType_EndTransaction:
             {
+               Write(tu->transactionid);
+
                auto& f = _files[tu->transactionid];
                f.close();
                _files.erase(tu->transactionid);
@@ -416,8 +441,12 @@ public:
             break;
 
             case MsgType_Data:
-               _files[tu->transactionid] << tu->messagedata.data();
-               break;
+            {
+               _manager.Add(tu);
+
+               Write(tu->transactionid);
+            }
+            break;
 
             default:
             {
@@ -429,6 +458,20 @@ public:
             }
          }
       });
+   }
+
+   void Write(uint32_t transactionID)
+   {
+      while (1)
+      {
+         auto pTu = _manager.Collect(transactionID);
+         if (pTu)
+         {
+            std::string s(pTu->messagedata.begin(), pTu->messagedata.end());
+            _files[transactionID] << s;
+         }
+         else break;
+      }
    }
 
    void Run()
@@ -457,8 +500,8 @@ public:
          tu->messagelength = filename.size();
          tu->messagetype = MsgType_StartTransaction;
          tu->transactionid = transactionID;
-         tu->sequencenum = sequenceNumber++;
-         _manager.Add(tu);
+         tu->sequencenum = 0;
+         //_manager.Add(tu);
 
          tu->GetBlob(buffer);
          sender->Send(buffer);
@@ -481,7 +524,7 @@ public:
             tu->messagelength = tu->messagedata.size();
             tu->transactionid = transactionID;
             tu->sequencenum = sequenceNumber++;
-            _manager.Add(tu);
+            //_manager.Add(tu);
 
             // Send this block to the server
             tu->GetBlob(buffer);
@@ -497,14 +540,15 @@ public:
          tu->messagelength = filename.size();
          tu->messagetype = MsgType_EndTransaction;
          tu->transactionid = transactionID;
-         tu->sequencenum = sequenceNumber++;
-         _manager.Add(tu);
+         tu->sequencenum = 0;
+         //_manager.Add(tu);
 
          tu->GetBlob(buffer);
          sender->Send(buffer);
 
          // Todo: Hang out for a while waiting for retransmit requests
-         Sleep(10000);
+         char q;
+         std::cin >> q;
       }
       catch (std::exception& e)
       {
