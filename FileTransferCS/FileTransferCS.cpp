@@ -22,36 +22,18 @@
 #include "TransactionUnit.h"
 #include "TransactionManager.h"
 
-class INetworkListener
-{
-public:
-   virtual void Listen() = 0;
-};
-
-class IStreamCallback
-{
-   virtual void Process(std::function<void()> callback) = 0;
-};
-
-class IDatacache
-{
-   virtual void Store() = 0;
-   virtual void Retrieve() = 0;
-};
-
 class IReader
 {
 public:
    virtual uint32_t Read(std::vector<char>& s) = 0;
 };
 
-const static int _blockSize = 128;
-
 class FileReader : public IReader
 {
 public:
    FileReader(std::shared_ptr<ILogger> logger)
-      : _logger(logger)
+      : _logger(logger),
+        _blockSize(128)
    {}
    
    ~FileReader() = default;
@@ -59,6 +41,7 @@ public:
    uint32_t Read(std::vector<char>& s) override
    {
       // Open and read file data
+      s.resize(_blockSize);
       _fileStream.read(s.data(), s.size());
 
       auto count = _fileStream.gcount();
@@ -74,8 +57,8 @@ public:
 private:
    std::shared_ptr<ILogger> _logger;
    std::fstream _fileStream;
+   const uint8_t _blockSize;
 };
-
 
 class ISender
 {
@@ -206,20 +189,19 @@ private:
    std::function<void(std::vector<char>)> _callback;
 };
 
-
-
-class FileTransferCS
+class FileTransferServer
 {
 public:
-   FileTransferCS()
+   FileTransferServer(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool)
+      : _logger(logger),
+      _threadPool(threadPool)
    {
-      _logger = std::make_shared<SimpleLogger>();
-      
-      _threadPool = std::make_shared<WorkerThreadPool>();
+      Run();
+   }
 
-      // Create a UDP Server to collect data
+   void Run()
+   {
       _server = std::make_shared<UDPReceiver>(_logger, _threadPool);
-
       _server->Receive([&](auto buf)
       {
          // Handle the new packet
@@ -232,7 +214,7 @@ public:
          // Ensure we got the right cookie, otherwise just drop the message on the floor
          if (tu->IsValid())
          {
-            // Okay, valid message.  See what to do with it
+            // Okay, this look like a valid message.  See what to do with it, check the message type
             switch (tu->messagetype)
             {
             case MsgType_StartTransaction:
@@ -240,7 +222,7 @@ public:
                // This is a new transaction.  Record it and create the file it represents.
                auto& f = _files[tu->transactionid];
                std::string s(tu->messagedata.begin(), tu->messagedata.end());
-               std::stringstream ss; 
+               std::stringstream ss;
                ss << ".\\Received\\" << s;
                f.open(ss.str());
             }
@@ -290,6 +272,24 @@ public:
       }
    }
 
+private:
+   std::shared_ptr<ILogger> _logger;
+   std::shared_ptr<IWorkerThreadPool> _threadPool;
+   std::shared_ptr<IReceiver> _server;
+   TransactionManager _manager;
+   std::map<uint16_t, std::ofstream> _files;
+};
+
+class FileTransferClient
+{
+public:
+   FileTransferClient(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool)
+      : _logger(logger),
+        _threadPool(threadPool)
+   {
+      Run();
+   }
+
    void Run()
    {
       try
@@ -333,8 +333,8 @@ public:
             auto tu = std::make_shared<TransactionUnit>();
 
             // Read the first block from the file
-            tu->messagedata.resize(_blockSize);
             int read = reader->Read(tu->messagedata);
+            if (read == 0) break;
 
             tu->messagetype = MsgType_Data;
             tu->messagelength = (uint16_t)tu->messagedata.size();
@@ -345,9 +345,6 @@ public:
             // Send this block to the server
             tu->GetBlob(buffer);
             sender->Send(buffer);
-
-            if (read < _blockSize) break;
-
          }
 
          // Create a transmission unit for the end block
@@ -374,17 +371,19 @@ public:
 
 private:
    std::shared_ptr<ILogger> _logger;
-   std::shared_ptr<IReceiver> _server;
    std::shared_ptr<IWorkerThreadPool> _threadPool;
    TransactionManager _manager;
 
-   std::map<uint16_t, std::ofstream> _files;
 };
 
 
 
 int main()
 {
-   FileTransferCS ft;
-   ft.Run();
+   // Create a UDP Server to collect data
+   auto logger = std::make_shared<SimpleLogger>();
+   auto threadPool = std::make_shared<WorkerThreadPool>();
+
+   FileTransferServer fts(logger, threadPool);
+   FileTransferClient ftc(logger, threadPool);
 }

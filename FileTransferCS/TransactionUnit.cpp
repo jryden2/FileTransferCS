@@ -53,8 +53,5 @@ void TransactionUnit::GetBlob(std::vector<char>& buffer)
    memcpy(buf, &sequencenum, sizeof(sequencenum));
    buf += sizeof(sequencenum);
 
-   memcpy(buf, &sequencenum, sizeof(sequencenum));
-   buf += sizeof(sequencenum);
-
    memcpy(buf, messagedata.data(), messagedata.size());
 }
