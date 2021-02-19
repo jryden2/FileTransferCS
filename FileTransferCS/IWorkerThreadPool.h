@@ -15,7 +15,7 @@ public:
     virtual void Start() = 0;
     virtual void Stop() = 0;
    
-    virtual bool StartTimer(int timeoutMs, std::function<void()> callback) = 0;
+    virtual void StartTimer(int timeoutMs, std::function<void()> callback) = 0;
     
     virtual void CreateStrand(int& nStrandID) = 0;
     virtual void DestroyStrand(int nStrandID) = 0;
