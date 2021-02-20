@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <debugapi.h>
 
 class SimpleLogger : public ILogger
 {
