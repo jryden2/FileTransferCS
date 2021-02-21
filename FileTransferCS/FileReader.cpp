@@ -18,5 +18,6 @@ uint32_t FileReader::Read(std::vector<char>& s)
 
 void FileReader::SetFile(const std::string& filename)
 {
+   _filename = filename;
    _fileStream.open(filename);
 }

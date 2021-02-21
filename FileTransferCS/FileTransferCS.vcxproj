@@ -145,6 +145,7 @@
     <ClCompile Include="FileTransferClient.cpp" />
     <ClCompile Include="FileTransferCS.cpp" />
     <ClCompile Include="FileTransferServer.cpp" />
+    <ClCompile Include="FileWriter.cpp" />
     <ClCompile Include="TransactionUnit.cpp" />
     <ClCompile Include="UDPReceiver.cpp" />
     <ClCompile Include="UDPUnreliableSender.cpp" />
@@ -153,11 +154,13 @@
     <ClInclude Include="FileReader.h" />
     <ClInclude Include="FileTransferClient.h" />
     <ClInclude Include="FileTransferServer.h" />
+    <ClInclude Include="FileWriter.h" />
     <ClInclude Include="ILogger.h" />
     <ClInclude Include="IReader.h" />
     <ClInclude Include="IReceiver.h" />
     <ClInclude Include="ISender.h" />
     <ClInclude Include="IWorkerThreadPool.h" />
+    <ClInclude Include="IWriter.h" />
     <ClInclude Include="SimpleLogger.h" />
     <ClInclude Include="TransactionManager.h" />
     <ClInclude Include="TransactionUnit.h" />

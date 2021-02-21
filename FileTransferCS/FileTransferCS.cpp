@@ -6,6 +6,7 @@
 
 #include "UDPReceiver.h"
 #include "FileReader.h"
+#include "FileWriter.h"
 #include "UDPUnreliableSender.h"
 #include "FileTransferClient.h"
 #include "FileTransferServer.h"
@@ -28,7 +29,9 @@ int main()
    auto reader = std::make_shared<FileReader>(logger);
    reader->SetFile("Test.txt");
 
-   auto pFTS = std::make_unique<FileTransferServer>(logger, threadPool, receiver);
+   auto writerFactory = std::make_shared<FileWriterFactory>();
+
+   auto pFTS = std::make_unique<FileTransferServer>(logger, threadPool, receiver, writerFactory);
    auto pFTC = std::make_unique<FileTransferClient>(logger, threadPool, reader, sender);
 
    // Todo: Hang out for a while waiting for retransmit requests

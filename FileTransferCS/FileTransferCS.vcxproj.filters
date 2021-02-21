@@ -32,6 +32,9 @@
     <ClCompile Include="FileReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FileWriter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IWorkerThreadPool.h">
@@ -74,6 +77,12 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="IReader.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IWriter.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileWriter.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -2,10 +2,11 @@
 
 #include <sstream>
 
-FileTransferServer::FileTransferServer(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool, std::shared_ptr<IReceiver> receiver)
+FileTransferServer::FileTransferServer(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool, std::shared_ptr<IReceiver> receiver, std::shared_ptr<IWriterFactory> writerFactory)
       : _logger(logger),
       _threadPool(threadPool),
-      _receiver(receiver)
+      _receiver(receiver),
+      _writerFactory(writerFactory)
 {
    Run();
 }
@@ -29,22 +30,21 @@ void FileTransferServer::Run()
          {
          case MsgType_StartTransaction:
          {
-            // This is a new transaction.  Record it and create the file it represents.
-            auto& f = _files[tu->transactionid];
+            // This is a new transaction.  Record it and create a writer to represent it.
+            auto writer = _writerFactory->Create();
+            _writers[tu->transactionid] = writer;
             std::string s(tu->messagedata.begin(), tu->messagedata.end());
+
             std::stringstream ss;
             ss << ".\\Received\\" << s;
-            f.open(ss.str());
+            writer->SetDestination(ss.str());
          }
          break;
 
          case MsgType_EndTransaction:
          {
             Write(tu->transactionid);
-
-            auto& f = _files[tu->transactionid];
-            f.close();
-            _files.erase(tu->transactionid);
+            _writers.erase(tu->transactionid);
          }
          break;
 
@@ -76,7 +76,7 @@ void FileTransferServer::Write(uint32_t transactionID)
       if (pTu)
       {
          std::string s(pTu->messagedata.begin(), pTu->messagedata.end());
-         _files[transactionID] << s;
+         _writers[transactionID]->Write(s);
       }
       else break;
    }
