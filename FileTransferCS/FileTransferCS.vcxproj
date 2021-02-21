@@ -142,9 +142,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FileReader.cpp" />
-    <ClCompile Include="FileTransferClient.cpp" />
+    <ClCompile Include="DataTransferClient.cpp" />
     <ClCompile Include="FileTransferCS.cpp" />
-    <ClCompile Include="FileTransferServer.cpp" />
+    <ClCompile Include="DataTransferServer.cpp" />
     <ClCompile Include="FileWriter.cpp" />
     <ClCompile Include="TransactionUnit.cpp" />
     <ClCompile Include="UDPReceiver.cpp" />
@@ -152,8 +152,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileReader.h" />
-    <ClInclude Include="FileTransferClient.h" />
-    <ClInclude Include="FileTransferServer.h" />
+    <ClInclude Include="DataTransferClient.h" />
+    <ClInclude Include="DataTransferServer.h" />
     <ClInclude Include="FileWriter.h" />
     <ClInclude Include="ILogger.h" />
     <ClInclude Include="IReader.h" />

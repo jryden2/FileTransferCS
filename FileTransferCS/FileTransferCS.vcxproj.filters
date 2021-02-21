@@ -17,12 +17,6 @@
     <ClCompile Include="TransactionUnit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FileTransferServer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FileTransferClient.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="UDPUnreliableSender.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -33,6 +27,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FileWriter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DataTransferClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DataTransferServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -53,12 +53,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="TransactionManager.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FileTransferServer.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FileTransferClient.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="IReceiver.h">
@@ -83,6 +77,12 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="FileWriter.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DataTransferClient.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DataTransferServer.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
