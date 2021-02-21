@@ -2,7 +2,7 @@
 
 #include <random>
 
-FileTransferClient::FileTransferClient(std::shared_ptr<ILogger> logger, 
+DataTransferClient::DataTransferClient(std::shared_ptr<ILogger> logger, 
                                        std::shared_ptr<IWorkerThreadPool> threadPool, 
                                        std::shared_ptr<IReader> reader, 
                                        std::shared_ptr<ISender> sender)
@@ -14,7 +14,7 @@ FileTransferClient::FileTransferClient(std::shared_ptr<ILogger> logger,
    Run();
 }
 
-void FileTransferClient::Run()
+void DataTransferClient::Run()
 {
    try
    {

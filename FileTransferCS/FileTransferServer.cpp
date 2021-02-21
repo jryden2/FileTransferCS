@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-FileTransferServer::FileTransferServer(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool, std::shared_ptr<IReceiver> receiver, std::shared_ptr<IWriterFactory> writerFactory)
+DataTransferServer::DataTransferServer(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool, std::shared_ptr<IReceiver> receiver, std::shared_ptr<IWriterFactory> writerFactory)
       : _logger(logger),
       _threadPool(threadPool),
       _receiver(receiver),
@@ -11,7 +11,7 @@ FileTransferServer::FileTransferServer(std::shared_ptr<ILogger> logger, std::sha
    Run();
 }
 
-void FileTransferServer::Run()
+void DataTransferServer::Run()
 {
    _receiver->Receive([&](auto buf)
    {
@@ -68,7 +68,7 @@ void FileTransferServer::Run()
    });
 }
 
-void FileTransferServer::Write(uint32_t transactionID)
+void DataTransferServer::Write(uint32_t transactionID)
 {
    while (1)
    {

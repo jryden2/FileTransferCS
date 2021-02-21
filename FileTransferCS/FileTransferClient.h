@@ -9,10 +9,10 @@
 
 #include "TransactionManager.h"
 
-class FileTransferClient
+class DataTransferClient
 {
 public:
-   FileTransferClient(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool, std::shared_ptr<IReader> reader, std::shared_ptr<ISender> sender);
+   DataTransferClient(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool, std::shared_ptr<IReader> reader, std::shared_ptr<ISender> sender);
 
    void Run();
 

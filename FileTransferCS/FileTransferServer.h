@@ -10,13 +10,13 @@
 
 #include "TransactionManager.h"
 
-class FileTransferServer
+class DataTransferServer
 {
 public:
-   FileTransferServer(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool, std::shared_ptr<IReceiver> receiver, std::shared_ptr<IWriterFactory> writerFactory);
-   ~FileTransferServer() = default;
-   FileTransferServer(const FileTransferServer&) = delete;
-   FileTransferServer(FileTransferServer&&) = default;
+   DataTransferServer(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool, std::shared_ptr<IReceiver> receiver, std::shared_ptr<IWriterFactory> writerFactory);
+   ~DataTransferServer() = default;
+   DataTransferServer(const DataTransferServer&) = delete;
+   DataTransferServer(DataTransferServer&&) = default;
 
    void Run();
    void Write(uint32_t transactionID);

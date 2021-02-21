@@ -31,8 +31,8 @@ int main()
 
    auto writerFactory = std::make_shared<FileWriterFactory>();
 
-   auto pFTS = std::make_unique<FileTransferServer>(logger, threadPool, receiver, writerFactory);
-   auto pFTC = std::make_unique<FileTransferClient>(logger, threadPool, reader, sender);
+   auto pFTS = std::make_unique<DataTransferServer>(logger, threadPool, receiver, writerFactory);
+   auto pFTC = std::make_unique<DataTransferClient>(logger, threadPool, reader, sender);
 
    // Todo: Hang out for a while waiting for retransmit requests
    // Todo: Create lifetime control for the fts and/or ftc objects, for now just wait 
