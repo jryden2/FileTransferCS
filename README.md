@@ -9,7 +9,6 @@ Default behaviour uses filename 'temp.txt' and application will behave as both c
 To run as two different sessions execute two copies
 > FileTransferCS --server
 > FileTransferCS myfile.txt --client
-> 
 
 Transfer file must exist.  Server will create a subdirectory 'Received' in the current directory
 
