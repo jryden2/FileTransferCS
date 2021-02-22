@@ -18,15 +18,15 @@ Command line parameters can be used to isolate the server side and client side b
 for server behaviour and the --client command line switch for client side behaviour.
 
 Code layout
-DataTransferClient - Core processor responsible for sending client side data and receiving responses
-DataTransferServer - Core processor responsible for receiving server side data and sending responses
-TransactionManager - Core processor responsible for collecting and re-ordering incoming packets (also used by the client to save outgoing packets for retransmission)
-TransactionUnit - Interpreter for converting coded messages into readable data blocks and generating the formatted message data for sending on the wire
-UDPUnreliableSenderReceiver - Implements the UDP layers for sending and receiving data over a UDP socket
-FileReader - Implements the IReader interface, using the file system
-FileWriter - Implements the IWriter interface, using the file system
-SimpleLogger - Implements the ILogger interface - currently just prints to stdout
-WorkerThreadPool - Implements the IWorkerThreadPool interface - creates and manages worker threads
+- DataTransferClient - Core processor responsible for sending client side data and receiving responses
+- DataTransferServer - Core processor responsible for receiving server side data and sending responses
+- TransactionManager - Core processor responsible for collecting and re-ordering incoming packets (also used by the client to save outgoing packets for retransmission)
+- TransactionUnit - Interpreter for converting coded messages into readable data blocks and generating the formatted message data for sending on the wire
+- UDPUnreliableSenderReceiver - Implements the UDP layers for sending and receiving data over a UDP socket
+- FileReader - Implements the IReader interface, using the file system
+- FileWriter - Implements the IWriter interface, using the file system
+- SimpleLogger - Implements the ILogger interface - currently just prints to stdout
+- WorkerThreadPool - Implements the IWorkerThreadPool interface - creates and manages worker threads
 
 Features
 'SOLID' coding techiniques
