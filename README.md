@@ -1,6 +1,10 @@
 # FileTransferCS
 UDP File Transfer Client Server example
 
+Build:
+Visual Studio 2019 v142
+C++17
+
 Usage:
 > FileTransferCS [filename] [--server|--client]
 
@@ -13,7 +17,7 @@ To run as two different sessions execute two copies
 
 Transfer file must exist.  Server will create a subdirectory 'Received' in the current directory
 
-Application can run as a standalone app, passing UDP packets between client and server entities
+Application can run as a standalone app, passing UDP packets between client and server entities.
 Command line parameters can be used to isolate the server side and client side behaviour.  Simply execute two copies of the executable, passing the --server command line switch
 for server behaviour and the --client command line switch for client side behaviour.
 
@@ -39,7 +43,7 @@ Outstanding issues and TODOs
 - Sending of large files can overwhelm the UDP transport stack resulting in permanently lost packets including the end packet
 - Need a better ACK mechanism for packet transfer
 - Although code is currently set up for retransmission requests, missing packets are not detected by the server and the missing packet
-  request is never sent
+  request is never sent.  Out of order packets are handled.
 - Transmit port is hard coded to 1234
 - Needs more unit tests
 - std::filesystem inclusion creates an unusual build error.  Build is only successful when doing a 'rebuild all'.  This requires some investigation.
