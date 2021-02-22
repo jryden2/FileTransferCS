@@ -147,8 +147,7 @@
     <ClCompile Include="DataTransferServer.cpp" />
     <ClCompile Include="FileWriter.cpp" />
     <ClCompile Include="TransactionUnit.cpp" />
-    <ClCompile Include="UDPReceiver.cpp" />
-    <ClCompile Include="UDPUnreliableSender.cpp" />
+    <ClCompile Include="UDPUnreliableSenderReceiver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileReader.h" />
@@ -157,15 +156,13 @@
     <ClInclude Include="FileWriter.h" />
     <ClInclude Include="ILogger.h" />
     <ClInclude Include="IReader.h" />
-    <ClInclude Include="IReceiver.h" />
-    <ClInclude Include="ISender.h" />
+    <ClInclude Include="ISenderReceiver.h" />
     <ClInclude Include="IWorkerThreadPool.h" />
     <ClInclude Include="IWriter.h" />
     <ClInclude Include="SimpleLogger.h" />
     <ClInclude Include="TransactionManager.h" />
     <ClInclude Include="TransactionUnit.h" />
-    <ClInclude Include="UDPReceiver.h" />
-    <ClInclude Include="UDPUnreliableSender.h" />
+    <ClInclude Include="UDPUnreliableSenderReceiver.h" />
     <ClInclude Include="WorkerThreadPool.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

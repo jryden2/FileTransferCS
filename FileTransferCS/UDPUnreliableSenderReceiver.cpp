@@ -1,13 +1,14 @@
-#pragma once
+#include "UDPUnreliableSenderReceiver.h"
 
-#include "UDPReceiver.h"
-
-#include <memory>
 #include <sstream>
 
-UDPReceiver::UDPReceiver(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool)
-  : _logger(logger),
-    _threadPool(threadPool)
+UDPUnreliableSenderReceiver::UDPUnreliableSenderReceiver(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool)
+   : _logger(logger),
+   _threadPool(threadPool)
+{
+}
+
+void UDPUnreliableSenderReceiver::Start(uint16_t port)
 {
    WSADATA wsa;
    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
@@ -20,7 +21,7 @@ UDPReceiver::UDPReceiver(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorke
 
    sockaddr_in addr;
    addr.sin_family = AF_INET;
-   addr.sin_port = htons(1234);
+   addr.sin_port = htons(port);
    addr.sin_addr.s_addr = htonl(INADDR_ANY);
    int result = bind(_udpSocket, (sockaddr*)&addr, sizeof(addr));
    if (result == SOCKET_ERROR)
@@ -60,19 +61,31 @@ UDPReceiver::UDPReceiver(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorke
          _callback(buf);
       }
    });
+
 }
 
-UDPReceiver::~UDPReceiver()
+UDPUnreliableSenderReceiver::~UDPUnreliableSenderReceiver()
 {
    closesocket(_udpSocket);
-   
+
    // This is a bit of kludge.  A message posted to a 'stranded' thread execution would be best, but strands are not yet implemented in the thread pool
    std::lock_guard<std::mutex> lock(_terminateGuard);
 
    WSACleanup();
 }
 
-void UDPReceiver::Receive(std::function<void(std::vector<char>)> callback)
+void UDPUnreliableSenderReceiver::Send(const std::vector<char>& s)
+{
+   sockaddr_in addr;
+
+   addr.sin_family = AF_INET;
+   addr.sin_port = htons(1234);
+   inet_pton(AF_INET, "127.0.0.1", (void*)&addr.sin_addr.s_addr);
+
+   sendto(_udpSocket, s.data(), s.size(), 0, (sockaddr*)&addr, sizeof(addr));
+}
+
+void UDPUnreliableSenderReceiver::Receive(std::function<void(std::vector<char>)> callback)
 {
    _callback = callback;
 }

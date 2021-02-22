@@ -156,17 +156,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\FileTransferCS\DataTransferClient.cpp" />
+    <ClCompile Include="..\FileTransferCS\DataTransferServer.cpp" />
     <ClCompile Include="..\FileTransferCS\FileReader.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="..\FileTransferCS\FileWriter.cpp" />
+    <ClCompile Include="..\FileTransferCS\TransactionUnit.cpp" />
     <ClCompile Include="UnitTest.cpp" />
+    <ClCompile Include="UnitTest1.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\FileTransferCS\DataTransferClient.h" />
+    <ClInclude Include="..\FileTransferCS\DataTransferServer.h" />
     <ClInclude Include="..\FileTransferCS\FileReader.h" />
+    <ClInclude Include="..\FileTransferCS\FileWriter.h" />
+    <ClInclude Include="..\FileTransferCS\TransactionUnit.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

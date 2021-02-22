@@ -13,16 +13,31 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Test Sources">
+      <UniqueIdentifier>{314c55cb-9213-48eb-aa47-36e6587024d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UnitTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="..\FileTransferCS\FileReader.cpp">
+      <Filter>Test Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FileTransferCS\FileWriter.cpp">
+      <Filter>Test Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="UnitTest1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FileTransferCS\FileReader.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\FileTransferCS\DataTransferClient.cpp">
+      <Filter>Test Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FileTransferCS\DataTransferServer.cpp">
+      <Filter>Test Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FileTransferCS\TransactionUnit.cpp">
+      <Filter>Test Sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -30,7 +45,19 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FileTransferCS\FileReader.h">
-      <Filter>Source Files</Filter>
+      <Filter>Test Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FileTransferCS\FileWriter.h">
+      <Filter>Test Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FileTransferCS\DataTransferClient.h">
+      <Filter>Test Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FileTransferCS\DataTransferServer.h">
+      <Filter>Test Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FileTransferCS\TransactionUnit.h">
+      <Filter>Test Sources</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -14,6 +14,6 @@ public:
 class IWriterFactory
 {
 public:
-   virtual std::shared_ptr<IWriter> Create() = 0;
+   virtual std::shared_ptr<IWriter> Create(std::shared_ptr<ILogger> logger) = 0;
 };
 

@@ -1,8 +1,14 @@
 #include "FileWriter.h"
 
-std::shared_ptr<IWriter> FileWriterFactory::Create()
+std::shared_ptr<IWriter> FileWriterFactory::Create(std::shared_ptr<ILogger> logger)
 {
-   return std::make_shared<FileWriter>();
+   return std::make_shared<FileWriter>(logger);
+}
+
+FileWriter::FileWriter(std::shared_ptr<ILogger> logger)
+   : _logger(logger)
+{
+
 }
 
 FileWriter::~FileWriter()

@@ -1,11 +1,11 @@
-#include "FileTransferServer.h"
+#include "DataTransferServer.h"
 
 #include <sstream>
 
-DataTransferServer::DataTransferServer(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool, std::shared_ptr<IReceiver> receiver, std::shared_ptr<IWriterFactory> writerFactory)
+DataTransferServer::DataTransferServer(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool, std::shared_ptr<ISenderReceiver> senderReceiver, std::shared_ptr<IWriterFactory> writerFactory)
       : _logger(logger),
       _threadPool(threadPool),
-      _receiver(receiver),
+      _senderReceiver(senderReceiver),
       _writerFactory(writerFactory)
 {
    Run();
@@ -13,7 +13,7 @@ DataTransferServer::DataTransferServer(std::shared_ptr<ILogger> logger, std::sha
 
 void DataTransferServer::Run()
 {
-   _receiver->Receive([&](auto buf)
+   _senderReceiver->Receive([&](auto buf)
    {
       // Handle the new packet
       auto tu = std::make_shared<TransactionUnit>(buf);
@@ -31,7 +31,7 @@ void DataTransferServer::Run()
          case MsgType_StartTransaction:
          {
             // This is a new transaction.  Record it and create a writer to represent it.
-            auto writer = _writerFactory->Create();
+            auto writer = _writerFactory->Create(_logger);
             _writers[tu->transactionid] = writer;
             std::string s(tu->messagedata.begin(), tu->messagedata.end());
 

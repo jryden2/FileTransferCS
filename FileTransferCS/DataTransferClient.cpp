@@ -1,21 +1,26 @@
-#include "FileTransferClient.h"
+#include "DataTransferClient.h"
 
 #include <random>
 
 DataTransferClient::DataTransferClient(std::shared_ptr<ILogger> logger, 
                                        std::shared_ptr<IWorkerThreadPool> threadPool, 
                                        std::shared_ptr<IReader> reader, 
-                                       std::shared_ptr<ISender> sender)
+                                       std::shared_ptr<ISenderReceiver> senderReceiver)
    : _logger(logger),
    _threadPool(threadPool),
    _reader(reader),
-   _sender(sender)
+   _senderReceiver(senderReceiver)
 {
    Run();
 }
 
 void DataTransferClient::Run()
 {
+   _senderReceiver->Receive([&](auto buf)
+   {
+      // Todo: handle
+   });
+
    try
    {
       std::vector<char> buffer;
@@ -40,7 +45,7 @@ void DataTransferClient::Run()
       tu->sequencenum = 0;
 
       tu->GetBlob(buffer);
-      _sender->Send(buffer);
+      _senderReceiver->Send(buffer);
 
       while (1)
       {
@@ -59,7 +64,7 @@ void DataTransferClient::Run()
 
          // Send this block to the server
          tu->GetBlob(buffer);
-         _sender->Send(buffer);
+         _senderReceiver->Send(buffer);
       }
 
       // Create a transaction unit for the end block
@@ -71,7 +76,7 @@ void DataTransferClient::Run()
       tu->sequencenum = 0;
 
       tu->GetBlob(buffer);
-      _sender->Send(buffer);
+      _senderReceiver->Send(buffer);
    }
    catch (std::exception& e)
    {

@@ -98,8 +98,11 @@ public:
       {
          _stopFlag = true;
 
-         // Post a 0 task to wake the thread.  
-         Post(0);
+         // Post a 0 task to wake the threads.  
+         for (auto& p : _threads)
+         {
+            Post(0);
+         }
 
          // Wait for the threads
          for (auto& pair : _threads)
