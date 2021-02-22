@@ -18,24 +18,56 @@
 #include "SimpleLogger.h"
 
 
-int main()
+int main(int argc, char* argv[])
 {
+   std::string filename("Test.txt");
+
+   bool bServer = true;
+   bool bClient = true;
+   for (int i = 1; i<argc; i++)
+   {
+      std::string s = argv[i];
+      if (s == "--server")
+      {
+         bClient = false;
+         break;
+      }
+
+      if (s == "--client")
+      {
+         bServer = false;
+         break;
+      }
+
+      filename = argv[i];
+   }
+
    auto logger = std::make_shared<SimpleLogger>();
    auto threadPool = std::make_shared<WorkerThreadPool>();
-   
-   auto senderRecieverServer = std::make_shared<UDPUnreliableSenderReceiver>(logger, threadPool);
-   senderRecieverServer->Start(1234);
-
-   auto senderRecieverClient = std::make_shared<UDPUnreliableSenderReceiver>(logger, threadPool);
-   senderRecieverClient->Start(0);
+   threadPool->SetThreadCount(4);
 
    auto reader = std::make_shared<FileReader>(logger);
-   reader->SetFile("Test.txt");
+   reader->SetFile(filename);
 
    auto writerFactory = std::make_shared<FileWriterFactory>();
 
-   auto pFTS = std::make_unique<DataTransferServer>(logger, threadPool, senderRecieverServer, writerFactory);
-   auto pFTC = std::make_unique<DataTransferClient>(logger, threadPool, reader, senderRecieverClient);
+   std::unique_ptr<DataTransferServer> pFTS;
+   if (bServer)
+   {
+      auto senderRecieverServer = std::make_shared<UDPUnreliableSenderReceiver>(logger, threadPool);
+      senderRecieverServer->Start(1234);
+
+      pFTS = std::make_unique<DataTransferServer>(logger, threadPool, senderRecieverServer, writerFactory);
+   }
+
+   std::unique_ptr<DataTransferClient> pFTC;
+   if (bClient)
+   {
+      auto senderRecieverClient = std::make_shared<UDPUnreliableSenderReceiver>(logger, threadPool);
+      senderRecieverClient->Start(0);
+
+      pFTC = std::make_unique<DataTransferClient>(logger, threadPool, reader, senderRecieverClient);
+   }
 
    // Todo: Hang out for a while waiting for retransmit requests
    // Todo: Create lifetime control for the fts and/or ftc objects, for now just wait 

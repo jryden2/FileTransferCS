@@ -1,5 +1,8 @@
 #include "FileWriter.h"
 
+#include <sstream>
+#include <filesystem>
+
 std::shared_ptr<IWriter> FileWriterFactory::Create(std::shared_ptr<ILogger> logger)
 {
    return std::make_shared<FileWriter>(logger);
@@ -20,7 +23,13 @@ FileWriter::~FileWriter()
 }
 void FileWriter::SetDestination(const std::string& s)
 {
-   _filename = s;
+   // Create a subdirectory
+   std::filesystem::create_directory("Received");
+
+   std::stringstream ss;
+   ss << ".\\Received\\" << s;
+   
+   _filename = ss.str();
 
    // Todo: Error handling
    _file.open(_filename);

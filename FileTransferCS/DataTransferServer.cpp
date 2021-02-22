@@ -35,9 +35,7 @@ void DataTransferServer::Run()
             _writers[tu->transactionid] = writer;
             std::string s(tu->messagedata.begin(), tu->messagedata.end());
 
-            std::stringstream ss;
-            ss << ".\\Received\\" << s;
-            writer->SetDestination(ss.str());
+            writer->SetDestination(s);
          }
          break;
 
@@ -45,6 +43,15 @@ void DataTransferServer::Run()
          {
             Write(tu->transactionid);
             _writers.erase(tu->transactionid);
+
+            tu->messagelength = 0;
+            tu->messagetype = MsgType_RetransmitReq;
+            tu->transactionid = (uint32_t)tu->transactionid;
+            tu->sequencenum = 0;
+
+            std::vector<char> buffer;
+            tu->GetBlob(buffer);
+            _senderReceiver->Send(buffer);
          }
          break;
 

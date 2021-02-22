@@ -1,6 +1,7 @@
 #include "DataTransferClient.h"
 
 #include <random>
+#include <sstream>
 
 DataTransferClient::DataTransferClient(std::shared_ptr<ILogger> logger, 
                                        std::shared_ptr<IWorkerThreadPool> threadPool, 
@@ -11,16 +12,53 @@ DataTransferClient::DataTransferClient(std::shared_ptr<ILogger> logger,
    _reader(reader),
    _senderReceiver(senderReceiver)
 {
-   Run();
+   RunReceiver();
+   RunSender();
 }
 
-void DataTransferClient::Run()
+void DataTransferClient::RunReceiver()
 {
    _senderReceiver->Receive([&](auto buf)
    {
-      // Todo: handle
-   });
+      // Handle the new packet
+      auto tu = std::make_shared<TransactionUnit>(buf);
 
+      std::stringstream ss;
+      ss << "Client got " << buf.size() << " bytes";
+      _logger->Log(0, ss.str());
+
+      // Ensure we got the right cookie, otherwise just drop the message on the floor
+      if (tu->IsValid())
+      {
+         // Okay, this look like a valid message.  See what to do with it, check the message type
+         switch (tu->messagetype)
+         {
+         case MsgType_RetransmitReq:
+         {
+            std::stringstream ss;
+            ss << "Client got retransmit request";
+            _logger->Log(0, ss.str());
+         }
+         break;
+
+         case MsgType_StartTransaction:
+         case MsgType_EndTransaction:
+         case MsgType_Data:
+            break;
+         default:
+         {
+            std::stringstream ss;
+            ss << "Unknown message type " << tu->messagetype;
+            _logger->Log(3, ss.str());
+         }
+         break;
+         }
+      }
+   });
+}
+
+void DataTransferClient::RunSender()
+{
    try
    {
       std::vector<char> buffer;

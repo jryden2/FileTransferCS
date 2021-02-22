@@ -6,10 +6,6 @@ UDPUnreliableSenderReceiver::UDPUnreliableSenderReceiver(std::shared_ptr<ILogger
    : _logger(logger),
    _threadPool(threadPool)
 {
-}
-
-void UDPUnreliableSenderReceiver::Start(uint16_t port)
-{
    WSADATA wsa;
    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
    {
@@ -18,7 +14,10 @@ void UDPUnreliableSenderReceiver::Start(uint16_t port)
 
    _udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
    if (_udpSocket == INVALID_SOCKET) throw std::runtime_error("create socket failed");
+}
 
+void UDPUnreliableSenderReceiver::Start(uint16_t port)
+{
    sockaddr_in addr;
    addr.sin_family = AF_INET;
    addr.sin_port = htons(port);
@@ -81,6 +80,10 @@ void UDPUnreliableSenderReceiver::Send(const std::vector<char>& s)
    addr.sin_family = AF_INET;
    addr.sin_port = htons(1234);
    inet_pton(AF_INET, "127.0.0.1", (void*)&addr.sin_addr.s_addr);
+
+   std::stringstream ss;
+   ss << "Sending " << s.size() << " bytes";
+   _logger->Log(0, ss.str());
 
    sendto(_udpSocket, s.data(), s.size(), 0, (sockaddr*)&addr, sizeof(addr));
 }

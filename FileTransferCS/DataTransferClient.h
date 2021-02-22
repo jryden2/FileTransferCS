@@ -14,7 +14,8 @@ class DataTransferClient
 public:
    DataTransferClient(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool, std::shared_ptr<IReader> reader, std::shared_ptr<ISenderReceiver> sender);
 
-   void Run();
+   void RunReceiver();
+   void RunSender();
 
 private:
    std::shared_ptr<ILogger> _logger;

@@ -16,9 +16,9 @@ class WorkerThreadPool : public IWorkerThreadPool
 {
 public:
    WorkerThreadPool()
-      : _stopFlag(false)
+      : _stopFlag(false),
+      _threadCount(0)
    {
-      printf("WorkerThread construct");
    }
 
    virtual ~WorkerThreadPool()
