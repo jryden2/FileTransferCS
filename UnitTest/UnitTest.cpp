@@ -54,14 +54,14 @@ public:
 class MockSender : public ISenderReceiver
 {
 public:
-	void Send(const std::vector<char>& s)
+	void Send(const std::shared_ptr<TransactionUnit>& pTu)
 	{
 		std::string stringData;
-		stringData.assign(s.begin(), s.end());
+		stringData.assign(pTu->messagedata.begin(), pTu->messagedata.end());
 		sendData.push_back(stringData);
 	}
 
-	void Receive(std::function<void(std::vector<char>)> callback)
+	void Receive(std::function<void(std::shared_ptr<TransactionUnit>)> callback)
 	{}
 
 	void Start(uint16_t port)

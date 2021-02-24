@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <fstream>
+#include <mutex>
 
 #include "ILogger.h"
 #include "IWorkerThreadPool.h"
@@ -28,5 +29,6 @@ private:
    std::shared_ptr<IWriterFactory> _writerFactory;
    TransactionManager _manager;
    std::map<uint16_t, std::shared_ptr<IWriter>> _writers;
+   std::mutex _mutex;
 };
 

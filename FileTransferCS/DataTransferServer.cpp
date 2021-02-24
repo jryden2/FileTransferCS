@@ -1,6 +1,7 @@
 #include "DataTransferServer.h"
 
 #include <sstream>
+#include <mutex>
 
 DataTransferServer::DataTransferServer(std::shared_ptr<ILogger> logger, std::shared_ptr<IWorkerThreadPool> threadPool, std::shared_ptr<ISenderReceiver> senderReceiver, std::shared_ptr<IWriterFactory> writerFactory)
       : _logger(logger),
@@ -13,65 +14,65 @@ DataTransferServer::DataTransferServer(std::shared_ptr<ILogger> logger, std::sha
 
 void DataTransferServer::Run()
 {
-   _senderReceiver->Receive([&](auto buf)
+   _senderReceiver->Receive([&](auto pTransactionUnit)
    {
-      // Handle the new packet
-      auto tu = std::make_shared<TransactionUnit>(buf);
-
-      std::stringstream ss;
-      ss << "Receiver got " << buf.size() << " bytes";
-      _logger->Log(0, ss.str());
-
-      // Ensure we got the right cookie, otherwise just drop the message on the floor
-      if (tu->IsValid())
+      _threadPool->Post([&, pTransactionUnit]()
       {
-         // Okay, this look like a valid message.  See what to do with it, check the message type
-         switch (tu->messagetype)
+         std::lock_guard<std::mutex> lock(_mutex);
+
+         std::stringstream ss;
+         ss << "Receiver got " << pTransactionUnit->messagedata.size() << " bytes";
+         _logger->Log(0, ss.str());
+
+         // Ensure we got the right cookie, otherwise just drop the message on the floor
+         if (pTransactionUnit->IsValid())
          {
-         case MsgType_StartTransaction:
-         {
-            // This is a new transaction.  Record it and create a writer to represent it.
-            auto writer = _writerFactory->Create(_logger);
-            _writers[tu->transactionid] = writer;
-            std::string s(tu->messagedata.begin(), tu->messagedata.end());
+            // Okay, this look like a valid message.  See what to do with it, check the message type
+            switch (pTransactionUnit->messagetype)
+            {
+            case MsgType_StartTransaction:
+            {
+               // This is a new transaction.  Record it and create a writer to represent it.
+               auto writer = _writerFactory->Create(_logger);
+               _writers[pTransactionUnit->transactionid] = writer;
+               std::string s(pTransactionUnit->messagedata.begin(), pTransactionUnit->messagedata.end());
 
-            writer->SetDestination(s);
+               writer->SetDestination(s);
+            }
+            break;
+
+            case MsgType_EndTransaction:
+            {
+               Write(pTransactionUnit->transactionid);
+               _writers.erase(pTransactionUnit->transactionid);
+
+               pTransactionUnit->messagelength = 0;
+               pTransactionUnit->messagetype = MsgType_RetransmitReq;
+               pTransactionUnit->transactionid = (uint32_t)pTransactionUnit->transactionid;
+               pTransactionUnit->sequencenum = 0;
+
+               _senderReceiver->Send(pTransactionUnit);
+            }
+            break;
+
+            case MsgType_Data:
+            {
+               _manager.Add(pTransactionUnit);
+
+               Write(pTransactionUnit->transactionid);
+            }
+            break;
+
+            default:
+            {
+               std::stringstream ss;
+               ss << "Unknown message type " << pTransactionUnit->messagetype;
+               _logger->Log(3, ss.str());
+            }
+            break;
+            }
          }
-         break;
-
-         case MsgType_EndTransaction:
-         {
-            Write(tu->transactionid);
-            _writers.erase(tu->transactionid);
-
-            tu->messagelength = 0;
-            tu->messagetype = MsgType_RetransmitReq;
-            tu->transactionid = (uint32_t)tu->transactionid;
-            tu->sequencenum = 0;
-
-            std::vector<char> buffer;
-            tu->GetBlob(buffer);
-            _senderReceiver->Send(buffer);
-         }
-         break;
-
-         case MsgType_Data:
-         {
-            _manager.Add(tu);
-
-            Write(tu->transactionid);
-         }
-         break;
-
-         default:
-         {
-            std::stringstream ss;
-            ss << "Unknown message type " << tu->messagetype;
-            _logger->Log(3, ss.str());
-         }
-         break;
-         }
-      }
+      });
    });
 }
 

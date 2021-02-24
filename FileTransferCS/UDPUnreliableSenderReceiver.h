@@ -20,14 +20,14 @@ public:
    UDPUnreliableSenderReceiver(const UDPUnreliableSenderReceiver&) = delete;
    UDPUnreliableSenderReceiver(UDPUnreliableSenderReceiver&&) = default;
 
-   void Send(const std::vector<char>& s) override;
-   void Receive(std::function<void(std::vector<char>)> callback) override;
+   void Send(const std::shared_ptr<TransactionUnit>& tu) override;
+   void Receive(std::function<void(std::shared_ptr<TransactionUnit>)> callback) override;
    void Start(uint16_t port) override;
 
 private:
    std::shared_ptr<ILogger> _logger;
    std::shared_ptr<IWorkerThreadPool> _threadPool;
    SOCKET _udpSocket;
-   std::function<void(std::vector<char>)> _callback;
+   std::function<void(std::shared_ptr<TransactionUnit>)> _callback;
    std::mutex _terminateGuard;
 };

@@ -1,6 +1,10 @@
 #pragma once
 
 #include <vector>
+#include <memory>
+
+#include <WinSock2.h>
+#include <WS2tcpip.h>
 
 // Transaction unit headers
 //
@@ -33,11 +37,12 @@ class TransactionUnit
 {
 public:
    TransactionUnit();
-   TransactionUnit(const std::vector<char> buffer);
+   TransactionUnit(const std::vector<char>& buffer);
 
    bool IsValid() { return _isValid; }
+   void SetFromAddr(const sockaddr_in& fromAddr) { _fromAddr = fromAddr; }
 
-   void GetBlob(std::vector<char>& buffer);
+   void GetBlob(std::vector<char>& buffer) const;
 
    uint32_t cookie;
    uint32_t transactionid;
@@ -50,4 +55,5 @@ public:
 private:
    const uint32_t _mySize;
    bool _isValid;
+   sockaddr_in _fromAddr;
 };

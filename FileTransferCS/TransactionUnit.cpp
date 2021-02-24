@@ -1,6 +1,6 @@
 #include "TransactionUnit.h"
 
-TransactionUnit::TransactionUnit(const std::vector<char> buffer)
+TransactionUnit::TransactionUnit(const std::vector<char>& buffer)
    : _mySize(16)
 {
    auto buf = buffer.data();
@@ -32,7 +32,7 @@ TransactionUnit::TransactionUnit()
    cookie(MagicCookie)
 {}
 
-void TransactionUnit::GetBlob(std::vector<char>& buffer)
+void TransactionUnit::GetBlob(std::vector<char>& buffer) const
 {
    buffer.resize(_mySize + messagedata.size());
 
@@ -54,4 +54,6 @@ void TransactionUnit::GetBlob(std::vector<char>& buffer)
    buf += sizeof(sequencenum);
 
    memcpy(buf, messagedata.data(), messagedata.size());
+
+
 }

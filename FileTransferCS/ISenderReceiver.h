@@ -3,10 +3,12 @@
 #include <functional>
 #include <vector>
 
+#include "TransactionUnit.h"
+
 class ISenderReceiver
 {
 public:
-   virtual void Send(const std::vector<char>& s) = 0;
-   virtual void Receive(std::function<void(std::vector<char>)> callback) = 0;
+   virtual void Send(const std::shared_ptr<TransactionUnit>& tu) = 0;
+   virtual void Receive(std::function<void(std::shared_ptr<TransactionUnit>)> callback) = 0;
    virtual void Start(uint16_t port) = 0;
 };

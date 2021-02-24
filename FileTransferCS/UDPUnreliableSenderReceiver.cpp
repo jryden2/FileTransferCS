@@ -1,4 +1,5 @@
 #include "UDPUnreliableSenderReceiver.h"
+#include "TransactionUnit.h"
 
 #include <sstream>
 
@@ -36,11 +37,11 @@ void UDPUnreliableSenderReceiver::Start(uint16_t port)
 
       while (1)
       {
-         sockaddr_in from;
-         int fromlen = sizeof(from);
-         std::vector<char> buf;
-         buf.resize(0x1000);
-         int bytes = recvfrom(_udpSocket, buf.data(), buf.size(), 0, (sockaddr*)&from, &fromlen);
+         sockaddr_in fromAddr;
+         int fromlen = sizeof(fromAddr);
+         std::vector<char> buffer;
+         buffer.resize(0x1000);
+         int bytes = recvfrom(_udpSocket, buffer.data(), buffer.size(), 0, (sockaddr*)&fromAddr, &fromlen);
 
          if (bytes == SOCKET_ERROR)
          {
@@ -50,14 +51,18 @@ void UDPUnreliableSenderReceiver::Start(uint16_t port)
             break;
          }
 
-         buf.resize(bytes);
+         buffer.resize(bytes);
 
          std::stringstream ss;
          char ip[20];
-         ss << "Received " << bytes << " bytes from " << inet_ntop(AF_INET, (void*)&from.sin_addr, (PSTR)&ip, sizeof(ip)) << ":" << ntohs(from.sin_port);
+         ss << "Received " << bytes << " bytes from " << inet_ntop(AF_INET, (void*)&fromAddr.sin_addr, (PSTR)&ip, sizeof(ip)) << ":" << ntohs(fromAddr.sin_port);
          _logger->Log(0, ss.str());
 
-         _callback(buf);
+         // Handle the new packet
+         auto tu = std::make_shared<TransactionUnit>(buffer);
+         tu->SetFromAddr(fromAddr);
+
+         _callback(tu);
       }
    });
 
@@ -73,22 +78,24 @@ UDPUnreliableSenderReceiver::~UDPUnreliableSenderReceiver()
    WSACleanup();
 }
 
-void UDPUnreliableSenderReceiver::Send(const std::vector<char>& s)
+void UDPUnreliableSenderReceiver::Send(const std::shared_ptr<TransactionUnit>& pTU)
 {
-   sockaddr_in addr;
+   std::vector<char> buffer;
+   pTU->GetBlob(buffer);
 
+   sockaddr_in addr;
    addr.sin_family = AF_INET;
    addr.sin_port = htons(1234);
    inet_pton(AF_INET, "127.0.0.1", (void*)&addr.sin_addr.s_addr);
 
    std::stringstream ss;
-   ss << "Sending " << s.size() << " bytes";
+   ss << "Sending " << buffer.size() << " bytes";
    _logger->Log(0, ss.str());
 
-   sendto(_udpSocket, s.data(), s.size(), 0, (sockaddr*)&addr, sizeof(addr));
+   sendto(_udpSocket, buffer.data(), buffer.size(), 0, (sockaddr*)&addr, sizeof(addr));
 }
 
-void UDPUnreliableSenderReceiver::Receive(std::function<void(std::vector<char>)> callback)
+void UDPUnreliableSenderReceiver::Receive(std::function<void(std::shared_ptr<TransactionUnit>)> callback)
 {
    _callback = callback;
 }
