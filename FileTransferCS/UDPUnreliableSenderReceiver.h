@@ -22,7 +22,9 @@ public:
 
    void Send(const std::shared_ptr<TransactionUnit>& tu) override;
    void Receive(std::function<void(std::shared_ptr<TransactionUnit>)> callback) override;
-   void Start(uint16_t port) override;
+   
+   void Start(const std::string& remoteIP, uint16_t remotePort, uint16_t localPort);
+   void Start(const std::string& ip, uint16_t port);
 
 private:
    std::shared_ptr<ILogger> _logger;
@@ -30,4 +32,8 @@ private:
    SOCKET _udpSocket;
    std::function<void(std::shared_ptr<TransactionUnit>)> _callback;
    std::mutex _terminateGuard;
+
+   std::string _remoteIP;
+   uint16_t _remotePort;
+
 };

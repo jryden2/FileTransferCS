@@ -17,11 +17,21 @@ UDPUnreliableSenderReceiver::UDPUnreliableSenderReceiver(std::shared_ptr<ILogger
    if (_udpSocket == INVALID_SOCKET) throw std::runtime_error("create socket failed");
 }
 
-void UDPUnreliableSenderReceiver::Start(uint16_t port)
+void UDPUnreliableSenderReceiver::Start(const std::string& remoteIP, uint16_t remotePort)
 {
+   // Local port 0, binds to an ephemeral port
+   Start(remoteIP, remotePort, 0);
+}
+
+void UDPUnreliableSenderReceiver::Start(const std::string& remoteIP, uint16_t remotePort, uint16_t localPort)
+{
+   _remoteIP = remoteIP;
+   _remotePort = remotePort;
+
+   // Bind to the requested local port
    sockaddr_in addr;
    addr.sin_family = AF_INET;
-   addr.sin_port = htons(port);
+   addr.sin_port = htons(localPort);
    addr.sin_addr.s_addr = htonl(INADDR_ANY);
    int result = bind(_udpSocket, (sockaddr*)&addr, sizeof(addr));
    if (result == SOCKET_ERROR)
@@ -60,7 +70,7 @@ void UDPUnreliableSenderReceiver::Start(uint16_t port)
 
          // Handle the new packet
          auto tu = std::make_shared<TransactionUnit>(buffer);
-         tu->SetFromAddr(fromAddr);
+         tu->SetRemoteAddress(fromAddr);
 
          _callback(tu);
       }
@@ -83,10 +93,14 @@ void UDPUnreliableSenderReceiver::Send(const std::shared_ptr<TransactionUnit>& p
    std::vector<char> buffer;
    pTU->GetBlob(buffer);
 
+   // if pTu has an ip and port set, use it, otherwise, use the stored
+   uint16_t port = _remotePort;
+   std::string ip = _remoteIP;
+
    sockaddr_in addr;
    addr.sin_family = AF_INET;
-   addr.sin_port = htons(1234);
-   inet_pton(AF_INET, "127.0.0.1", (void*)&addr.sin_addr.s_addr);
+   addr.sin_port = htons(port);
+   inet_pton(AF_INET, ip.c_str() , (void*)&addr.sin_addr.s_addr);
 
    std::stringstream ss;
    ss << "Sending " << buffer.size() << " bytes";

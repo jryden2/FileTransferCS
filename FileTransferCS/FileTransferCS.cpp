@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
    if (bServer)
    {
       auto senderRecieverServer = std::make_shared<UDPUnreliableSenderReceiver>(logger, threadPool);
-      senderRecieverServer->Start(1234);
+      senderRecieverServer->Start("127.0.0.1", 11111, 11112);
 
       pFTS = std::make_unique<DataTransferServer>(logger, threadPool, senderRecieverServer, writerFactory);
    }
@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
    if (bClient)
    {
       auto senderRecieverClient = std::make_shared<UDPUnreliableSenderReceiver>(logger, threadPool);
-      senderRecieverClient->Start(0);
+      senderRecieverClient->Start("127.0.0.1", 11112, 11111);
 
       pFTC = std::make_unique<DataTransferClient>(logger, threadPool, reader, senderRecieverClient);
    }

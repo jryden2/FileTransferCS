@@ -3,6 +3,8 @@
 TransactionUnit::TransactionUnit(const std::vector<char>& buffer)
    : _mySize(16)
 {
+   memset(&_remoteAddr, 0, sizeof(_remoteAddr));
+
    auto buf = buffer.data();
 
    memcpy(&cookie, buf, sizeof(cookie));
@@ -30,7 +32,9 @@ TransactionUnit::TransactionUnit()
    : _mySize(16),
    _isValid(true),
    cookie(MagicCookie)
-{}
+{
+   memset(&_remoteAddr, 0, sizeof(_remoteAddr));
+}
 
 void TransactionUnit::GetBlob(std::vector<char>& buffer) const
 {

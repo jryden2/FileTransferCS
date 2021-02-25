@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 #include <memory>
 
@@ -40,7 +41,18 @@ public:
    TransactionUnit(const std::vector<char>& buffer);
 
    bool IsValid() { return _isValid; }
-   void SetFromAddr(const sockaddr_in& fromAddr) { _fromAddr = fromAddr; }
+
+   sockaddr_in GetRemoteAddress() { return _remoteAddr; }
+   void SetRemoteAddress(const sockaddr_in& fromAddr) { _remoteAddr = fromAddr; }
+   void SetRemoteIP(const std::string& ip) 
+   {
+      inet_pton(AF_INET, ip.c_str(), (void*)&_remoteAddr.sin_addr.s_addr);
+   }
+
+   void SetRemotePort(uint16_t port)
+   {
+      _remoteAddr.sin_port = port;
+   }
 
    void GetBlob(std::vector<char>& buffer) const;
 
@@ -55,5 +67,5 @@ public:
 private:
    const uint32_t _mySize;
    bool _isValid;
-   sockaddr_in _fromAddr;
+   sockaddr_in _remoteAddr;
 };
