@@ -137,7 +137,16 @@ namespace UnitTest
 				pTu->SetMessageData(destination);
 				receiver->_callback(pTu);
 
-				Sleep(5000);
+				std::condition_variable cv;
+				std::mutex m;
+				std::unique_lock<std::mutex> lock(m);
+				threadPool->Post([&m, &cv]
+				{
+					std::lock_guard<std::mutex> lock(m);
+					cv.notify_one();
+				});
+				cv.wait(lock);
+				
 				threadPool->Stop();
 				
 				// After a start call the factory should have created a mock writer for the server
@@ -150,5 +159,53 @@ namespace UnitTest
 				}
 			}
 		}
+
+		TEST_METHOD(DataTransferServer_Start_MultiThread)
+		{
+			auto loggerStub = std::make_shared<LoggerStub>();
+			auto threadPool = std::make_shared<WorkerThreadPool>();
+			threadPool->SetThreadCount(4);
+			auto writer = std::make_shared<MockWriterFactory>();
+			auto receiver = std::make_shared<MockSenderReceiver>();
+
+			auto pServer = std::make_shared<DataTransferServer>(loggerStub, threadPool, receiver, writer);
+
+			// We expect that that server will have registered for receive callbacks by now...
+			Assert::IsTrue((bool)receiver->_callback);
+
+			if (receiver->_callback)
+			{
+				// Execute the call back with some data
+				auto pTu = std::make_shared<TransactionUnit>();
+				pTu->SetMessageType(MsgType_StartTransaction);
+				pTu->SetSequenceNumber(0);
+
+				std::string destination("Test Message Data 12345");
+				pTu->SetMessageData(destination);
+				receiver->_callback(pTu);
+
+				std::condition_variable cv;
+				std::mutex m;
+				std::unique_lock<std::mutex> lock(m);
+				threadPool->Post([&m, &cv]
+				{
+					std::lock_guard<std::mutex> lock(m);
+					cv.notify_one();
+				});
+				cv.wait(lock);
+
+				threadPool->Stop();
+
+				// After a start call the factory should have created a mock writer for the server
+				Assert::IsTrue(writer->_mock.get() != 0);
+
+				// Also, the destination we used should have been set as the destination in the mock writer
+				if (writer->_mock)
+				{
+					Assert::AreEqual(destination, writer->_mock->GetDestination());
+				}
+			}
+		}
+
 	};
 }
