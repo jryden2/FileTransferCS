@@ -88,22 +88,23 @@ UDPUnreliableSenderReceiver::~UDPUnreliableSenderReceiver()
    WSACleanup();
 }
 
-void UDPUnreliableSenderReceiver::Send(const std::shared_ptr<TransactionUnit>& pTU)
+void UDPUnreliableSenderReceiver::Send(const std::shared_ptr<TransactionUnit>& pTu)
 {
    std::vector<char> buffer;
-   pTU->GetBlob(buffer);
+   pTu->GetBlob(buffer);
 
-   // if pTu has an ip and port set, use it, otherwise, use the stored
-   uint16_t port = _remotePort;
-   std::string ip = _remoteIP;
-
-   sockaddr_in addr;
-   addr.sin_family = AF_INET;
-   addr.sin_port = htons(port);
-   inet_pton(AF_INET, ip.c_str() , (void*)&addr.sin_addr.s_addr);
+   // if pTu has an ip and port set, use it, otherwise, use the stored data to generate the addr
+   auto addr = pTu->GetRemoteAddress();
+   if (addr.sin_port == 0)
+   {
+      addr.sin_family = AF_INET;
+      addr.sin_port = htons(_remotePort);
+      inet_pton(AF_INET, _remoteIP.c_str(), (void*)&addr.sin_addr.s_addr);
+   }
 
    std::stringstream ss;
-   ss << "Sending " << buffer.size() << " bytes";
+   char ip[20];
+   ss << "Sending " << buffer.size() << " bytes to " << inet_ntop(AF_INET, (void*)&addr.sin_addr, (PSTR)&ip, sizeof(ip)) << ":" << ntohs(addr.sin_port);
    _logger->Log(0, ss.str());
 
    sendto(_udpSocket, buffer.data(), buffer.size(), 0, (sockaddr*)&addr, sizeof(addr));

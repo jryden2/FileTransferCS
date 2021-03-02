@@ -21,14 +21,14 @@ void DataTransferClient::RunReceiver()
    _senderReceiver->Receive([&](auto pTransactionUnit)
    {
       std::stringstream ss;
-      ss << "Client got " << pTransactionUnit->messagedata.size() << " bytes";
+      ss << "Client got " << pTransactionUnit->GetMessageLength() << " bytes";
       _logger->Log(0, ss.str());
 
       // Ensure we got the right cookie, otherwise just drop the message on the floor
       if (pTransactionUnit->IsValid())
       {
          // Okay, this look like a valid message.  See what to do with it, check the message type
-         switch (pTransactionUnit->messagetype)
+         switch (pTransactionUnit->GetMessageType())
          {
          case MsgType_RetransmitReq:
          {
@@ -45,7 +45,7 @@ void DataTransferClient::RunReceiver()
          default:
          {
             std::stringstream ss;
-            ss << "Unknown message type " << pTransactionUnit->messagetype;
+            ss << "Unknown message type " << pTransactionUnit->GetMessageType();
             _logger->Log(3, ss.str());
          }
          break;
@@ -64,49 +64,47 @@ void DataTransferClient::RunSender()
       std::uniform_real_distribution<double> dist(0, 0xFFFF);
       auto transactionID = dist(mt);
 
-      // Start sequencing a zero
+      // Start sequencing at zero
       int sequenceNumber = 0;
 
       // Create a transaction unit for the start block
-      auto pTU = std::make_shared<TransactionUnit>();
+      auto pTu = std::make_shared<TransactionUnit>();
       
-      auto source = _reader->GetSource();
-      pTU->messagedata.assign(source.begin(), source.end());
-      pTU->messagelength = (uint16_t)source.size();
-      pTU->messagetype = MsgType_StartTransaction;
-      pTU->transactionid = (uint32_t)transactionID;
-      pTU->sequencenum = 0;
+      pTu->SetMessageData(_reader->GetSource());
+      pTu->SetMessageType(MsgType_StartTransaction);
+      pTu->SetTransactionID((uint32_t)transactionID);
+      pTu->SetSequenceNumber(sequenceNumber++);
 
-      _senderReceiver->Send(pTU);
+      _senderReceiver->Send(pTu);
 
       while (1)
       {
-         // Create a transaction unit for this block
-         auto pTU = std::make_shared<TransactionUnit>();
+         // Create a transaction unit for this data block
+         pTu = std::make_shared<TransactionUnit>();
 
          // Read the first block from the file
-         int read = _reader->Read(pTU->messagedata);
+         auto& messageData = pTu->GetMessageDataVector();
+         int read = _reader->Read(messageData);
          if (read == 0) break;
 
-         pTU->messagetype = MsgType_Data;
-         pTU->messagelength = (uint16_t)pTU->messagedata.size();
-         pTU->transactionid = (uint32_t)transactionID;
-         pTU->sequencenum = sequenceNumber++;
-         _manager.Add(pTU);
+         pTu->SetMessageType(MsgType_Data);
+         pTu->SetTransactionID((uint32_t)transactionID);
+         pTu->SetSequenceNumber(sequenceNumber++);
+         _manager.Add(pTu);
 
          // Send this block to the server
-         _senderReceiver->Send(pTU);
+         _senderReceiver->Send(pTu);
       }
 
       // Create a transaction unit for the end block
-      pTU = std::make_shared<TransactionUnit>();
-      pTU->messagedata.assign(source.begin(), source.end());
-      pTU->messagelength = (uint16_t)source.size();
-      pTU->messagetype = MsgType_EndTransaction;
-      pTU->transactionid = (uint32_t)transactionID;
-      pTU->sequencenum = 0;
+      pTu = std::make_shared<TransactionUnit>();
+      pTu->SetMessageData(_reader->GetSource());
+     
+      pTu->SetMessageType(MsgType_EndTransaction);
+      pTu->SetTransactionID((uint32_t)transactionID);
+      pTu->SetSequenceNumber(sequenceNumber++);
 
-      _senderReceiver->Send(pTU);
+      _senderReceiver->Send(pTu);
    }
    catch (std::exception& e)
    {

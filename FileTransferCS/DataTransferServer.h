@@ -20,7 +20,7 @@ public:
    DataTransferServer(DataTransferServer&&) = default;
 
    void Run();
-   void Write(uint32_t transactionID);
+   void Write(std::shared_ptr<TransactionUnit> pTu);
 
 private:
    std::shared_ptr<ILogger> _logger;

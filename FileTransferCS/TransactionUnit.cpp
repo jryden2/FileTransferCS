@@ -7,57 +7,60 @@ TransactionUnit::TransactionUnit(const std::vector<char>& buffer)
 
    auto buf = buffer.data();
 
-   memcpy(&cookie, buf, sizeof(cookie));
-   buf += sizeof(cookie);
+   memcpy(&_cookie, buf, sizeof(_cookie));
+   buf += sizeof(_cookie);
 
-   memcpy(&transactionid, buf, sizeof(transactionid));
-   buf += sizeof(transactionid);
+   memcpy(&_transactionid, buf, sizeof(_transactionid));
+   buf += sizeof(_transactionid);
 
-   memcpy(&messagetype, buf, sizeof(messagetype));
-   buf += sizeof(messagetype);
+   memcpy(&_messagetype, buf, sizeof(_messagetype));
+   buf += sizeof(_messagetype);
 
-   memcpy(&messagelength, buf, sizeof(messagelength));
-   buf += sizeof(messagelength);
+   uint16_t messageLength;
+   memcpy(&messageLength, buf, sizeof(messageLength));
+   buf += sizeof(messageLength);
 
-   memcpy(&sequencenum, buf, sizeof(sequencenum));
-   buf += sizeof(sequencenum);
+   memcpy(&_sequencenum, buf, sizeof(_sequencenum));
+   buf += sizeof(_sequencenum);
 
-   messagedata.resize(messagelength);
-   messagedata.assign(buf, buf + messagelength);
+   _messagedata.resize(messageLength);
+   _messagedata.assign(buf, buf + messageLength);
 
-   _isValid = cookie == MagicCookie;
+   _isValid = _cookie == MagicCookie;
 }
 
 TransactionUnit::TransactionUnit()
    : _mySize(16),
    _isValid(true),
-   cookie(MagicCookie)
+   _cookie(MagicCookie),
+   _messagetype(0)
 {
    memset(&_remoteAddr, 0, sizeof(_remoteAddr));
 }
 
 void TransactionUnit::GetBlob(std::vector<char>& buffer) const
 {
-   buffer.resize(_mySize + messagedata.size());
+   buffer.resize(_mySize + _messagedata.size());
 
    char* buf = buffer.data();
 
-   memcpy(buf, &cookie, sizeof(cookie));
-   buf += sizeof(cookie);
+   memcpy(buf, &_cookie, sizeof(_cookie));
+   buf += sizeof(_cookie);
 
-   memcpy(buf, &transactionid, sizeof(transactionid));
-   buf += sizeof(transactionid);
+   memcpy(buf, &_transactionid, sizeof(_transactionid));
+   buf += sizeof(_transactionid);
 
-   memcpy(buf, &messagetype, sizeof(messagetype));
-   buf += sizeof(messagetype);
+   memcpy(buf, &_messagetype, sizeof(_messagetype));
+   buf += sizeof(_messagetype);
 
-   memcpy(buf, &messagelength, sizeof(messagelength));
-   buf += sizeof(messagelength);
+   uint16_t messageLength = _messagedata.size();
+   memcpy(buf, &messageLength, sizeof(messageLength));
+   buf += sizeof(messageLength);
 
-   memcpy(buf, &sequencenum, sizeof(sequencenum));
-   buf += sizeof(sequencenum);
+   memcpy(buf, &_sequencenum, sizeof(_sequencenum));
+   buf += sizeof(_sequencenum);
 
-   memcpy(buf, messagedata.data(), messagedata.size());
+   memcpy(buf, _messagedata.data(), _messagedata.size());
 
 
 }

@@ -42,29 +42,47 @@ public:
 
    bool IsValid() { return _isValid; }
 
+   uint32_t GetTransactionID() { return _transactionid; }
+   void SetTransactionID(uint32_t transactionid) { _transactionid = transactionid; }
+   
+   uint16_t GetMessageType() { return _messagetype; }
+   void SetMessageType(uint16_t messagetype) { _messagetype = messagetype; }
+   
+   uint32_t GetSequenceNumber() { return _sequencenum; }
+   void SetSequenceNumber(uint32_t sequencenum) { _sequencenum = sequencenum; }
+
+   void GetMessageData(std::string& s) { s.assign(_messagedata.begin(), _messagedata.end()); }
+   void SetMessageData(const std::string& s)
+   {
+      _messagedata.assign(s.begin(), s.end());
+   }
+
+   std::vector<char>& GetMessageDataVector() { return _messagedata; }
+
+   uint16_t GetMessageLength() { return (uint16_t)_messagedata.size(); }
+
    sockaddr_in GetRemoteAddress() { return _remoteAddr; }
    void SetRemoteAddress(const sockaddr_in& fromAddr) { _remoteAddr = fromAddr; }
-   void SetRemoteIP(const std::string& ip) 
+   void SetRemoteIP(const std::string& ip)
    {
       inet_pton(AF_INET, ip.c_str(), (void*)&_remoteAddr.sin_addr.s_addr);
    }
-
    void SetRemotePort(uint16_t port)
    {
       _remoteAddr.sin_port = port;
    }
 
+
    void GetBlob(std::vector<char>& buffer) const;
 
-   uint32_t cookie;
-   uint32_t transactionid;
-   uint16_t messagetype;
-   uint16_t messagelength;
-   uint32_t sequencenum;
-
-   std::vector<char> messagedata;
-
 private:
+   uint32_t _cookie;
+   uint32_t _transactionid;
+   uint16_t _messagetype;
+   uint32_t _sequencenum;
+
+   std::vector<char> _messagedata;
+
    const uint32_t _mySize;
    bool _isValid;
    sockaddr_in _remoteAddr;

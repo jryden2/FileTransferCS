@@ -14,15 +14,15 @@ public:
    void Add(std::shared_ptr<TransactionUnit> tu)
    {
       // Find the associated transaction and add the unit to the list of pending messages
-      auto iter = _packetMap.find(tu->transactionid);
+      auto iter = _packetMap.find(tu->GetTransactionID());
       if (iter != _packetMap.end())
       {
-         iter->second.insert(std::make_pair(tu->sequencenum, tu));
+         iter->second.insert(std::make_pair(tu->GetSequenceNumber(), tu));
       }
       else
       {
          // Create a new transaction for this unit
-         _packetMap[tu->transactionid].insert(std::make_pair(tu->sequencenum, tu));
+         _packetMap[tu->GetTransactionID()].insert(std::make_pair(tu->GetSequenceNumber(), tu));
       }
    }
 
@@ -37,10 +37,20 @@ public:
             auto p = sequenceMap.begin()->second;
 
             // Check sequence
-            if (p->sequencenum == _nextSequenceMap[transactionID])
+            if (p->GetSequenceNumber() == _nextSequenceMap[transactionID])
             {
                _nextSequenceMap[transactionID]++;
                _packetMap.erase(iter);
+               return p;
+            }
+            else
+            {
+               // Prepare a missing packet message
+               auto pMissingSeqTU = std::make_shared<TransactionUnit>();
+               pMissingSeqTU->SetTransactionID(p->GetTransactionID());
+               pMissingSeqTU->SetSequenceNumber(_nextSequenceMap[transactionID]);
+               pMissingSeqTU->SetMessageType(MsgType_RetransmitReq);
+               pMissingSeqTU->SetRemoteAddress(p->GetRemoteAddress());
                return p;
             }
          }
